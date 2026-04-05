@@ -6,6 +6,7 @@ import { fetchCustomerOrders } from '../../features/orders/orderSlice';
 import { ArrowLeft, Mail, Phone, Calendar, IndianRupee, ShoppingBag, Clock, CheckCircle, Truck, XCircle, MapPin } from 'lucide-react';
 import DataTable from '../../components/common/DataTable';
 import Loader from '../../components/common/Loader';
+import { statusConfigs } from '../../utils/statusStyles';
 
 const CustomerDetailsPage = () => {
   const { id } = useParams();
@@ -33,14 +34,7 @@ const CustomerDetailsPage = () => {
   const realTotalSpent = validOrders.reduce((sum, o) => sum + o.totalAmount, 0);
 
   const getStatusBadge = (status) => {
-    const configs = {
-      pending: { color: 'bg-yellow-100 text-yellow-700', icon: <Clock className="h-3 w-3" /> },
-      processing: { color: 'bg-blue-100 text-blue-700', icon: <ShoppingBag className="h-3 w-3" /> },
-      shipped: { color: 'bg-purple-100 text-purple-700', icon: <Truck className="h-3 w-3" /> },
-      delivered: { color: 'bg-green-100 text-green-700', icon: <CheckCircle className="h-3 w-3" /> },
-      cancelled: { color: 'bg-red-100 text-red-700', icon: <XCircle className="h-3 w-3" /> },
-    };
-    const config = configs[status.toLowerCase()] || configs.pending;
+    const config = statusConfigs[status.toLowerCase()] || statusConfigs.pending;
     return (
       <span className={`inline-flex items-center gap-1.5 px-2 py-0.5 rounded-full text-[10px] font-bold ${config.color}`}>
         {status.toUpperCase()}

@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
-import { fetchProducts, deleteProduct, setProductPage, pushProductToken } from '../../features/products/productSlice';
+import { fetchProducts, setProductPage, pushProductToken } from '../../features/products/productSlice';
 import { fetchCategories } from '../../features/categories/categorySlice';
 import Button from '../../components/common/Button';
 import { Plus, Edit2, Search, Package, Eye } from 'lucide-react';
@@ -34,12 +34,6 @@ const ProductsPage = () => {
       const prevToken = tokenHistory[currentPage - 2];
       dispatch(setProductPage(currentPage - 1));
       dispatch(fetchProducts({ pageSize, pageToken: prevToken }));
-    }
-  };
-
-  const handleDelete = (id) => {
-    if (window.confirm('Are you sure you want to delete this product?')) {
-      dispatch(deleteProduct(id));
     }
   };
 

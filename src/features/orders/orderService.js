@@ -70,24 +70,23 @@ const getOrdersByCustomer = async (customerId) => {
           op: 'EQUAL',
           value: { stringValue: customerId }
         }
-      }
+      },
+      orderBy: [
+        {
+          field: { fieldPath: 'createdAt' },
+          direction: 'DESCENDING'
+        }
+      ]
     }
   };
-  try {
-    const response = await firestoreApi.post(':runQuery', query);
-    const results = response.data
-      .filter(item => item.document)
-      .map(item => transformDoc(item.document));
-    return results.sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));
-  } catch (error) {
-    console.error("Query by userId failed, attempting customerId fallback", error);
-    query.structuredQuery.where.fieldFilter.field.fieldPath = 'customerId';
-    const response2 = await firestoreApi.post(':runQuery', query);
-    const results2 = response2.data
-      .filter(item => item.document)
-      .map(item => transformDoc(item.document));
-    return results2.sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));
-  }
+
+  const response = await firestoreApi.post(ENDPOINTS.FIRESTORE.RUNQUERY, query);
+
+  const results = response.data
+    .filter(item => item.document)
+    .map(item => transformDoc(item.document));
+
+  return results;
 };
 
 const updateOrderStatus = async (id, status) => {

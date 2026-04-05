@@ -3,9 +3,6 @@ import { getFriendlyErrorMessage } from '../../utils/errorMessages';
 import * as adminService from './adminService';
 import * as authService from './authService';
 
-const API_KEY = import.meta.env.VITE_FIREBASE_API_KEY;
-const AUTH_URL = `https://identitytoolkit.googleapis.com/v1/accounts:signInWithPassword?key=${API_KEY}`;
-
 export const loginUser = createAsyncThunk(
   'auth/loginUser',
   async ({ email, password }, { rejectWithValue }) => {

@@ -87,11 +87,6 @@ const updateProduct = async (id, data) => {
   return transformDoc(response.data);
 };
 
-const deleteProduct = async (id) => {
-  await firestoreApi.delete(`${ENDPOINTS.FIRESTORE.PRODUCTS}/${id}`);
-  return id;
-};
-
 const updateProductStock = async (productId, incrementAmount) => {
   if (!productId || incrementAmount === 0) return;
   const payload = {
@@ -116,4 +111,4 @@ const updateProductStock = async (productId, incrementAmount) => {
   }
 };
 
-export { getProductById, getProducts, createProduct, updateProduct, deleteProduct, updateProductStock };
+export { getProductById, getProducts, createProduct, updateProduct, updateProductStock };

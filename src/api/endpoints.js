@@ -8,7 +8,8 @@ const ENDPOINTS = {
     CATEGORIES: '/categories',
     ORDERS: '/orders',
     CUSTOMERS: '/customers',
-    ADMINS: '/admins'
+    ADMINS: '/admins',
+    RUNQUERY: ':runQuery'
   }
 };
 
