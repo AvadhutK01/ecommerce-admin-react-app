@@ -4,6 +4,7 @@ import { fetchOrders, setOrderPage, pushOrderToken } from '../../features/orders
 import { Search, Eye, ShoppingBag, Clock, CheckCircle, Truck, XCircle } from 'lucide-react';
 import DataTable from '../../components/common/DataTable';
 import { useNavigate } from 'react-router-dom';
+import { statusConfigs } from '../../utils/statusStyles';
 
 const OrdersPage = () => {
   const dispatch = useDispatch();
@@ -33,16 +34,8 @@ const OrdersPage = () => {
   };
 
   const getStatusBadge = (status) => {
-    const configs = {
-      pending: { color: 'bg-yellow-100 text-yellow-700 border-yellow-200', icon: <Clock className="h-3 w-3" /> },
-      processing: { color: 'bg-blue-100 text-blue-700 border-blue-200', icon: <ShoppingBag className="h-3 w-3" /> },
-      shipped: { color: 'bg-purple-100 text-purple-700 border-purple-200', icon: <Truck className="h-3 w-3" /> },
-      delivered: { color: 'bg-green-100 text-green-700 border-green-200', icon: <CheckCircle className="h-3 w-3" /> },
-      cancelled: { color: 'bg-red-100 text-red-700 border-red-200', icon: <XCircle className="h-3 w-3" /> },
-      rejected: { color: 'bg-red-100 text-red-700 border-red-200', icon: <XCircle className="h-3 w-3" /> },
-    };
 
-    const config = configs[status.toLowerCase()] || configs.pending;
+    const config = statusConfigs[status.toLowerCase()] || statusConfigs.pending;
 
     return (
       <span className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-semibold border ${config.color}`}>
@@ -123,13 +116,13 @@ const OrdersPage = () => {
   ];
 
   const filteredOrders = orders.filter(order => {
-    const matchesSearch = 
+    const matchesSearch =
       order.customerName.toLowerCase().includes(searchTerm.toLowerCase()) ||
       order.orderNumber.toLowerCase().includes(searchTerm.toLowerCase()) ||
       order.id.toLowerCase().includes(searchTerm.toLowerCase());
-    
+
     const matchesStatus = statusFilter === 'all' || order.status.toLowerCase() === statusFilter.toLowerCase();
-    
+
     return matchesSearch && matchesStatus;
   });
 
@@ -154,7 +147,7 @@ const OrdersPage = () => {
               onChange={(e) => setSearchTerm(e.target.value)}
             />
           </div>
-          
+
           <div className="flex items-center gap-2">
             <span className="text-gray-500 font-medium whitespace-nowrap">Status:</span>
             <div className="flex bg-gray-50 p-1 rounded-lg border border-gray-100 overflow-x-auto">
@@ -162,11 +155,10 @@ const OrdersPage = () => {
                 <button
                   key={status}
                   onClick={() => setStatusFilter(status)}
-                  className={`px-3 py-1.5 rounded-md text-xs font-medium transition-all whitespace-nowrap ${
-                    statusFilter === status 
-                      ? 'bg-white text-primary-600 shadow-sm border border-gray-100' 
-                      : 'text-gray-500 hover:text-gray-700'
-                  }`}
+                  className={`px-3 py-1.5 rounded-md text-xs font-medium transition-all whitespace-nowrap ${statusFilter === status
+                    ? 'bg-white text-primary-600 shadow-sm border border-gray-100'
+                    : 'text-gray-500 hover:text-gray-700'
+                    }`}
                 >
                   {status.charAt(0).toUpperCase() + status.slice(1)}
                 </button>
