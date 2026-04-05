@@ -1,20 +1,17 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
 import { useParams, useNavigate } from 'react-router-dom';
-import { fetchOrderById, updateStatus } from '../features/orders/orderSlice';
-import { updatePaymentStatus } from '../api/orderService';
-import { updateProductStock } from '../api/productService'; // Added for inventory sync
+import { fetchOrderById, updateStatus, updatePaymentStatus } from '../../features/orders/orderSlice';
 import { ArrowLeft, Clock, ShoppingBag, Truck, CheckCircle, XCircle, User, MapPin, CreditCard, Package, Download } from 'lucide-react';
-import Button from '../components/common/Button';
-import Loader from '../components/common/Loader';
-import generateInvoice from '../utils/generateInvoice';
+import Button from '../../components/common/Button';
+import Loader from '../../components/common/Loader';
+import generateInvoice from '../../utils/generateInvoice';
 
 const OrderDetailsPage = () => {
   const { id } = useParams();
   const navigate = useNavigate();
   const dispatch = useDispatch();
-  const { selectedOrder: order, isLoading } = useSelector((state) => state.orders);
-  const [updating, setUpdating] = useState(false);
+  const { selectedOrder: order, isLoading, isUpdatingPayment } = useSelector((state) => state.orders);
 
   useEffect(() => {
     dispatch(fetchOrderById(id));
@@ -22,21 +19,10 @@ const OrderDetailsPage = () => {
 
   const handleStatusUpdate = async (newStatus) => {
     if (!window.confirm(`Are you sure you want to change status to ${newStatus}?`)) return;
-    setUpdating(true);
-    await dispatch(updateStatus({ id, status: newStatus }));
-    
-    if (newStatus === 'rejected') {
-      for (const item of order.items) {
-        await updateProductStock(item.id, item.quantity);
-      }
-      
-      if (order.paymentMethod?.toUpperCase() === 'ONLINE') {
-        await updatePaymentStatus(id, 'refunded');
-        dispatch(fetchOrderById(id));
-      }
+    const result = await dispatch(updateStatus({ id, status: newStatus, items: order.items }));
+    if (!result.error && newStatus === 'rejected' && order.paymentMethod?.toUpperCase() === 'ONLINE') {
+      dispatch(updatePaymentStatus({ id, paymentStatus: 'refunded' }));
     }
-    
-    setUpdating(false);
   };
 
   const statusConfigs = {
@@ -70,13 +56,13 @@ const OrderDetailsPage = () => {
             <p className="text-gray-500 mt-1">Placed on {new Date(order.createdAt).toLocaleString('en-IN')}</p>
           </div>
         </div>
-        
+
         <div className="flex gap-2">
           <select
             className="h-10 px-3 rounded-lg border border-gray-200 focus:ring-2 focus:ring-primary-500 focus:border-transparent outline-none transition-all disabled:opacity-50 print:hidden"
             value={order.status}
             onChange={(e) => handleStatusUpdate(e.target.value)}
-            disabled={updating || ['delivered', 'cancelled', 'rejected'].includes(order.status)}
+            disabled={isLoading || isUpdatingPayment || ['delivered', 'cancelled', 'rejected'].includes(order.status)}
           >
             <option value={order.status}>{order.status.charAt(0).toUpperCase() + order.status.slice(1)}</option>
             {order.status === 'pending' && <option value="processing">Processing</option>}

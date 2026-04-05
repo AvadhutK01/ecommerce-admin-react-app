@@ -1,7 +1,7 @@
 import { createSlice, createAsyncThunk } from '@reduxjs/toolkit';
-import axios from 'axios';
 import { getFriendlyErrorMessage } from '../../utils/errorMessages';
-import * as adminService from '../../api/adminService';
+import * as adminService from './adminService';
+import * as authService from './authService';
 
 const API_KEY = import.meta.env.VITE_FIREBASE_API_KEY;
 const AUTH_URL = `https://identitytoolkit.googleapis.com/v1/accounts:signInWithPassword?key=${API_KEY}`;
@@ -10,27 +10,10 @@ export const loginUser = createAsyncThunk(
   'auth/loginUser',
   async ({ email, password }, { rejectWithValue }) => {
     try {
-      const response = await axios.post(AUTH_URL, {
-        email,
-        password,
-        returnSecureToken: true,
-      });
-      
-      const { idToken, localId, displayName, expiresIn } = response.data;
-      
-      const user = {
-        uid: localId,
-        email,
-        displayName: displayName || email.split('@')[0],
-      };
-      
-      localStorage.setItem('token', idToken);
-      localStorage.setItem('user', JSON.stringify(user));
-      
-      return { token: idToken, user };
+      const { token, user } = await authService.loginUser(email, password);
+      return { token, user };
     } catch (error) {
-      const errorCode = error.response?.data?.error?.message || 'UNKNOWN_ERROR';
-      const message = getFriendlyErrorMessage(errorCode);
+      const message = getFriendlyErrorMessage(error.message || error);
       return rejectWithValue(message);
     }
   }
@@ -40,15 +23,10 @@ export const resetPassword = createAsyncThunk(
   'auth/resetPassword',
   async (email, { rejectWithValue }) => {
     try {
-      const RESET_URL = `https://identitytoolkit.googleapis.com/v1/accounts:sendOobCode?key=${API_KEY}`;
-      await axios.post(RESET_URL, {
-        requestType: 'PASSWORD_RESET',
-        email,
-      });
+      await authService.resetPassword(email);
       return true;
     } catch (error) {
-      const errorCode = error.response?.data?.error?.message || 'UNKNOWN_ERROR';
-      return rejectWithValue(getFriendlyErrorMessage(errorCode));
+      return rejectWithValue(getFriendlyErrorMessage(error.message || error));
     }
   }
 );

@@ -1,14 +1,14 @@
 import React, { useEffect, useState } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
-import { fetchCategories, deleteCategory, clearCategoryError, setPage, pushToken } from '../features/categories/categorySlice';
-import Button from '../components/common/Button';
-import { Plus, Edit2, Trash2, Search, Layers, Eye } from 'lucide-react';
-import CategoryModal from '../components/categories/CategoryModal';
-import DataTable from '../components/common/DataTable';
+import { fetchCategories, deleteCategory, clearCategoryError, setPage, pushToken } from '../../features/categories/categorySlice';
+import Button from '../../components/common/Button';
+import { Plus, Edit2, Search, Layers, Eye } from 'lucide-react';
+import CategoryModal from '../../components/categories/CategoryModal';
+import DataTable from '../../components/common/DataTable';
 
 const CategoriesPage = () => {
   const dispatch = useDispatch();
-  const { items: categories, isLoading, error, nextPageToken, tokenHistory, currentPage, pageSize } = useSelector((state) => state.categories);
+  const { items: categories, isLoading, nextPageToken, tokenHistory, currentPage, pageSize } = useSelector((state) => state.categories);
   const [searchTerm, setSearchTerm] = useState('');
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [isViewOnly, setIsViewOnly] = useState(false);
@@ -116,9 +116,9 @@ const CategoriesPage = () => {
     }
   ];
 
-  const filteredCategories = categories.filter(cat => 
-    cat.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    cat.description.toLowerCase().includes(searchTerm.toLowerCase())
+  const filteredCategories = (categories || []).filter(cat => 
+    (cat?.name || '').toLowerCase().includes(searchTerm.toLowerCase()) ||
+    (cat?.description || '').toLowerCase().includes(searchTerm.toLowerCase())
   );
 
   return (

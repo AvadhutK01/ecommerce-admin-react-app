@@ -1,5 +1,5 @@
 import { createSlice, createAsyncThunk } from '@reduxjs/toolkit';
-import * as categoryService from '../../api/categoryService';
+import * as categoryService from './categoryService';
 
 export const fetchCategories = createAsyncThunk(
   'categories/fetchCategories',
@@ -52,9 +52,9 @@ const categorySlice = createSlice({
     isLoading: false,
     error: null,
     nextPageToken: null,
-    tokenHistory: [null], // [null, token1, token2...]
+    tokenHistory: [null],
     currentPage: 1,
-    pageSize: 10,
+    pageSize: 5,
   },
   reducers: {
     clearCategoryError: (state) => {
@@ -81,24 +81,48 @@ const categorySlice = createSlice({
       })
       .addCase(fetchCategories.fulfilled, (state, action) => {
         state.isLoading = false;
-        state.items = action.payload.documents;
-        state.nextPageToken = action.payload.nextPageToken;
+        state.items = action.payload?.items || [];
+        state.nextPageToken = action.payload?.nextPageToken || null;
       })
       .addCase(fetchCategories.rejected, (state, action) => {
         state.isLoading = false;
         state.error = action.payload;
       })
+      .addCase(addCategory.pending, (state) => {
+        state.isLoading = true;
+      })
       .addCase(addCategory.fulfilled, (state, action) => {
+        state.isLoading = false;
         state.items.push(action.payload);
       })
+      .addCase(addCategory.rejected, (state, action) => {
+        state.isLoading = false;
+        state.error = action.payload;
+      })
+      .addCase(updateCategory.pending, (state) => {
+        state.isLoading = true;
+      })
       .addCase(updateCategory.fulfilled, (state, action) => {
+        state.isLoading = false;
         const index = state.items.findIndex(cat => cat.id === action.payload.id);
         if (index !== -1) {
           state.items[index] = action.payload;
         }
       })
+      .addCase(updateCategory.rejected, (state, action) => {
+        state.isLoading = false;
+        state.error = action.payload;
+      })
+      .addCase(deleteCategory.pending, (state) => {
+        state.isLoading = true;
+      })
       .addCase(deleteCategory.fulfilled, (state, action) => {
+        state.isLoading = false;
         state.items = state.items.filter(cat => cat.id !== action.payload);
+      })
+      .addCase(deleteCategory.rejected, (state, action) => {
+        state.isLoading = false;
+        state.error = action.payload;
       });
   },
 });

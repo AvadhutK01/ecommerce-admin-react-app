@@ -1,19 +1,7 @@
-import { Routes, Route, Navigate } from 'react-router-dom';
 import { useDispatch, useSelector } from 'react-redux';
 import { useEffect } from 'react';
-import LoginPage from './pages/LoginPage';
-import ForgotPasswordPage from './pages/ForgotPasswordPage';
-import ProfilePage from './pages/ProfilePage';
-import DashboardPage from './pages/DashboardPage';
-import CategoriesPage from './pages/CategoriesPage';
-import ProductsPage from './pages/ProductsPage';
-import ProductFormPage from './pages/ProductFormPage';
-import OrdersPage from './pages/OrdersPage';
-import OrderDetailsPage from './pages/OrderDetailsPage';
-import CustomersPage from './pages/CustomersPage';
-import CustomerDetailsPage from './pages/CustomerDetailsPage';
 import { fetchAdminProfile } from './features/auth/authSlice';
-import AdminLayout from './components/layout/AdminLayout';
+import AppRoutes from './routes/AppRoutes';
 
 function App() {
   const dispatch = useDispatch();
@@ -25,45 +13,7 @@ function App() {
     }
   }, [token, user, profile, dispatch]);
 
-  return (
-    <Routes>
-      <Route 
-        path="/login" 
-        element={!token ? <LoginPage /> : <Navigate to="/" />} 
-      />
-
-      <Route 
-        path="/forgot-password" 
-        element={!token ? <ForgotPasswordPage /> : <Navigate to="/" />} 
-      />
-      
-      <Route 
-        path="/*" 
-        element={
-          token ? (
-            <AdminLayout>
-              <Routes>
-                <Route path="/" element={<DashboardPage />} />
-                <Route path="/profile" element={<ProfilePage />} />
-                <Route path="/categories" element={<CategoriesPage />} />
-                <Route path="/products" element={<ProductsPage />} />
-                <Route path="/products/add" element={<ProductFormPage />} />
-                <Route path="/products/edit/:id" element={<ProductFormPage />} />
-                <Route path="/products/view/:id" element={<ProductFormPage isViewOnly={true} />} />
-                <Route path="/orders" element={<OrdersPage />} />
-                <Route path="/orders/view/:id" element={<OrderDetailsPage />} />
-                <Route path="/customers" element={<CustomersPage />} />
-                <Route path="/customers/view/:id" element={<CustomerDetailsPage />} />
-                <Route path="*" element={<Navigate to="/" />} />
-              </Routes>
-            </AdminLayout>
-          ) : (
-            <Navigate to="/login" />
-          )
-        } 
-      />
-    </Routes>
-  );
+  return <AppRoutes />;
 }
 
 export default App;

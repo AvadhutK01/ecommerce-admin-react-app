@@ -114,11 +114,10 @@ const CategoryModal = ({ isOpen, onClose, category, isViewOnly = false }) => {
             <textarea
               name="description"
               rows="3"
-              className={`w-full rounded-md border bg-white px-3 py-2 text-sm text-gray-900 placeholder:text-gray-500 focus:outline-none focus:ring-2 focus:ring-primary-500 transition-all disabled:bg-gray-50 disabled:text-gray-500 ${
-                formik.touched.description && formik.errors.description 
-                  ? 'border-red-500 focus:ring-red-500' 
-                  : 'border-gray-300'
-              }`}
+              className={`w-full rounded-md border bg-white px-3 py-2 text-sm text-gray-900 placeholder:text-gray-500 focus:outline-none focus:ring-2 focus:ring-primary-500 transition-all disabled:bg-gray-50 disabled:text-gray-500 ${formik.touched.description && formik.errors.description
+                ? 'border-red-500 focus:ring-red-500'
+                : 'border-gray-300'
+                }`}
               placeholder="Briefly describe this category..."
               onChange={formik.handleChange}
               onBlur={formik.handleBlur}
@@ -146,7 +145,7 @@ const CategoryModal = ({ isOpen, onClose, category, isViewOnly = false }) => {
                 </button>
               )}
             </div>
-            
+
             <div className="space-y-4">
               {formik.values.subcategories.map((sub, index) => (
                 <div key={index} className="space-y-1">

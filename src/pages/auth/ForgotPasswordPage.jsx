@@ -2,9 +2,9 @@ import React, { useEffect } from 'react';
 import { useFormik } from 'formik';
 import * as Yup from 'yup';
 import { useDispatch, useSelector } from 'react-redux';
-import { resetPassword, clearError } from '../features/auth/authSlice';
-import Button from '../components/common/Button';
-import Input from '../components/common/Input';
+import { resetPassword, clearError } from '../../features/auth/authSlice';
+import Button from '../../components/common/Button';
+import Input from '../../components/common/Input';
 import { Mail, ArrowLeft } from 'lucide-react';
 import { Link } from 'react-router-dom';
 

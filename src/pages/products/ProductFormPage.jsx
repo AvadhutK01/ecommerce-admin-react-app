@@ -4,12 +4,11 @@ import { useDispatch, useSelector } from 'react-redux';
 import { useFormik } from 'formik';
 import * as Yup from 'yup';
 import { Plus, X, Upload, Image as ImageIcon, ChevronLeft, Trash2 } from 'lucide-react';
-import Button from '../components/common/Button';
-import Input from '../components/common/Input';
-import { fetchCategories } from '../features/categories/categorySlice';
-import { addProduct, updateProduct, clearProductError } from '../features/products/productSlice';
-import { uploadFile } from '../api/storageService';
-import { getProductById } from '../api/productService';
+import Button from '../../components/common/Button';
+import Input from '../../components/common/Input';
+import { fetchCategories } from '../../features/categories/categorySlice';
+import { addProduct, updateProduct, clearProductError, fetchProductById } from '../../features/products/productSlice';
+import { uploadFile } from '../../features/products/storageService';
 const productSchema = Yup.object().shape({
   name: Yup.string().required('Product name is required').min(3, 'Name too short'),
   description: Yup.string().required('Description is required').min(20, 'Description should be detailed'),
@@ -30,7 +29,7 @@ const ProductFormPage = ({ isViewOnly = false }) => {
   const fileInputRef = useRef(null);
   const galleryInputRef = useRef(null);
   const { items: categories } = useSelector((state) => state.categories);
-  const { items: products, isLoading, error } = useSelector((state) => state.products);
+  const { items: products, isLoading, isFetchingProduct, selectedProduct, error } = useSelector((state) => state.products);
   const [selectedCategory, setSelectedCategory] = useState(null);
   const [thumbnailFile, setThumbnailFile] = useState(null); 
   const [galleryFiles, setGalleryFiles] = useState([]); 
@@ -103,13 +102,12 @@ const ProductFormPage = ({ isViewOnly = false }) => {
         let product = products.find(p => p.id === id);
 
         if (!product) {
-          try {
-            product = await getProductById(id);
-          } catch (err) {
-            console.error('Failed to fetch product:', err);
+          const result = await dispatch(fetchProductById(id));
+          if (result.error) {
             navigate('/products');
             return;
           }
+          product = result.payload;
         }
 
         if (product) {
@@ -138,7 +136,7 @@ const ProductFormPage = ({ isViewOnly = false }) => {
     };
 
     loadProduct();
-  }, [id, isEdit, products, categories]);
+  }, [id, isEdit, categories]);
 
   const handleCategoryChange = (e) => {
     const catId = e.target.value;
@@ -181,6 +179,14 @@ const ProductFormPage = ({ isViewOnly = false }) => {
     const updatedImages = newItems.map(item => item.url || item.preview);
     formik.setFieldValue('images', updatedImages);
   };
+
+  if (isFetchingProduct) {
+    return (
+      <div className="p-8 max-w-5xl mx-auto space-y-6 text-sm">
+        <Loader size="lg" className="p-16" />
+      </div>
+    );
+  }
 
   return (
     <div className="p-8 max-w-5xl mx-auto space-y-6 text-sm">

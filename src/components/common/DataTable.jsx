@@ -7,7 +7,7 @@ const DataTable = ({
   data, 
   isLoading, 
   onRowClick,
-  pagination = null, // { onNext, onPrev, hasNext, hasPrev, currentPage }
+  pagination = null,
   emptyMessage = "No data found"
 }) => {
   return (

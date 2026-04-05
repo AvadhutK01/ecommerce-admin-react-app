@@ -1,10 +1,11 @@
 import React, { useEffect, useState } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
 import { useParams, useNavigate } from 'react-router-dom';
-import { fetchCustomerById } from '../features/customers/customerSlice';
-import { fetchOrders } from '../features/orders/orderSlice';
+import { fetchCustomerById } from '../../features/customers/customerSlice';
+import { fetchCustomerOrders } from '../../features/orders/orderSlice';
 import { ArrowLeft, Mail, Phone, Calendar, IndianRupee, ShoppingBag, Clock, CheckCircle, Truck, XCircle, MapPin } from 'lucide-react';
-import DataTable from '../components/common/DataTable';
+import DataTable from '../../components/common/DataTable';
+import Loader from '../../components/common/Loader';
 
 const CustomerDetailsPage = () => {
   const { id } = useParams();
@@ -15,13 +16,21 @@ const CustomerDetailsPage = () => {
 
   useEffect(() => {
     dispatch(fetchCustomerById(id));
-    dispatch(fetchOrders({ pageSize: 50 }));
+    dispatch(fetchCustomerOrders(id));
   }, [dispatch, id]);
 
-  if (customerLoading && !customer) return <div className="p-8 text-center text-gray-500">Loading profile...</div>;
+  if (customerLoading && !customer) return <Loader fullPage={true} />;
   if (!customer) return <div className="p-8 text-center text-red-500 font-medium">Customer not found</div>;
 
   const customerOrders = orders.filter(o => o.customerId === id);
+
+  const validOrders = customerOrders.filter(o => 
+    !['rejected', 'cancelled'].includes(o.status?.toLowerCase() || '') && 
+    !['failed', 'pending', 'refunded'].includes(o.paymentStatus?.toLowerCase() || '')
+  );
+
+  const realTotalOrders = customerOrders.length;
+  const realTotalSpent = validOrders.reduce((sum, o) => sum + o.totalAmount, 0);
 
   const getStatusBadge = (status) => {
     const configs = {
@@ -89,11 +98,11 @@ const CustomerDetailsPage = () => {
             <div className="grid grid-cols-2 md:grid-cols-4 gap-6">
               <div className="space-y-1">
                 <p className="text-xs text-gray-400 font-medium uppercase tracking-wider">Total Orders</p>
-                <p className="text-xl font-bold text-gray-900">{customer.totalOrders}</p>
+                <p className="text-xl font-bold text-gray-900">{realTotalOrders}</p>
               </div>
               <div className="space-y-1">
                 <p className="text-xs text-gray-400 font-medium uppercase tracking-wider">Total Spent</p>
-                <p className="text-xl font-bold text-primary-600">₹{customer.totalSpent.toLocaleString()}</p>
+                <p className="text-xl font-bold text-primary-600">₹{realTotalSpent.toLocaleString()}</p>
               </div>
               <div className="space-y-1">
                 <p className="text-xs text-gray-400 font-medium uppercase tracking-wider">Member Since</p>
@@ -113,12 +122,14 @@ const CustomerDetailsPage = () => {
                 Order History
               </h3>
             </div>
-            <DataTable 
-              columns={columns}
-              data={customerOrders}
-              isLoading={ordersLoading}
-              emptyMessage="No orders found for this customer"
-            />
+            <div className="max-h-[380px] overflow-y-auto custom-scrollbar">
+              <DataTable 
+                columns={columns}
+                data={customerOrders}
+                isLoading={ordersLoading}
+                emptyMessage="No orders found for this customer"
+              />
+            </div>
           </div>
         </div>
 

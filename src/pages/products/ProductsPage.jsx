@@ -1,16 +1,16 @@
 import React, { useEffect, useState } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
-import { fetchProducts, deleteProduct, clearProductError, setProductPage, pushProductToken } from '../features/products/productSlice';
-import { fetchCategories } from '../features/categories/categorySlice';
-import Button from '../components/common/Button';
-import { Plus, Edit2, Trash2, Search, Package, Eye } from 'lucide-react';
-import DataTable from '../components/common/DataTable';
+import { fetchProducts, deleteProduct, setProductPage, pushProductToken } from '../../features/products/productSlice';
+import { fetchCategories } from '../../features/categories/categorySlice';
+import Button from '../../components/common/Button';
+import { Plus, Edit2, Search, Package, Eye } from 'lucide-react';
+import DataTable from '../../components/common/DataTable';
 import { useNavigate } from 'react-router-dom';
 
 const ProductsPage = () => {
   const dispatch = useDispatch();
   const navigate = useNavigate();
-  const { items: products, isLoading, error, nextPageToken, tokenHistory, currentPage, pageSize } = useSelector((state) => state.products);
+  const { items: products, isLoading, nextPageToken, tokenHistory, currentPage, pageSize } = useSelector((state) => state.products);
   const { items: categories } = useSelector((state) => state.categories);
   const [searchTerm, setSearchTerm] = useState('');
 

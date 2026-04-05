@@ -1,16 +1,13 @@
-import axiosInstance from './axiosInstance';
-
-const PROJECT_ID = import.meta.env.VITE_FIREBASE_PROJECT_ID;
-const BASE_URL = `https://firestore.googleapis.com/v1/projects/${PROJECT_ID}/databases/(default)/documents/orders`;
+import { firestoreApi } from '../../api/axiosInstance';
+import ENDPOINTS from '../../api/endpoints';
 
 const transformDoc = (doc) => {
   const fields = doc.fields;
   const id = doc.name.split('/').pop();
-  
   return {
     id,
     orderNumber: fields?.orderNumber?.stringValue || '',
-    customerId: fields?.customerId?.stringValue || '',
+    customerId: fields?.customerId?.stringValue || fields?.userId?.stringValue || '',
     customerName: fields?.customerName?.stringValue || '',
     customerEmail: fields?.customerEmail?.stringValue || '',
     totalAmount: Number(fields?.totalAmount?.doubleValue || fields?.totalAmount?.integerValue || 0),
@@ -22,7 +19,7 @@ const transformDoc = (doc) => {
     items: fields?.items?.arrayValue?.values?.map(v => {
       const f = v.mapValue.fields;
       return {
-        productId: f.productId?.stringValue || '',
+        productId: f.id?.stringValue || '',
         name: f.name?.stringValue || '',
         price: Number(f.price?.doubleValue || f.price?.integerValue || 0),
         quantity: Number(f.quantity?.doubleValue || f.quantity?.integerValue || 0),
@@ -40,14 +37,14 @@ const transformDoc = (doc) => {
   };
 };
 
-export const getOrders = async (pageSize = 10, pageToken = '') => {
+const getOrders = async (pageSize = 10, pageToken = '') => {
   try {
-    const params = new URLSearchParams();
-    params.append('pageSize', pageSize);
-    if (pageToken) params.append('pageToken', pageToken);
-    params.append('orderBy', 'createdAt desc');
-    
-    const response = await axiosInstance.get(`${BASE_URL}?${params.toString()}`);
+    const params = {
+      pageSize,
+      orderBy: 'createdAt desc'
+    };
+    if (pageToken) params.pageToken = pageToken;
+    const response = await firestoreApi.get(ENDPOINTS.FIRESTORE.ORDERS, { params });
     return {
       documents: response.data.documents?.map(transformDoc) || [],
       nextPageToken: response.data.nextPageToken || null
@@ -58,29 +55,59 @@ export const getOrders = async (pageSize = 10, pageToken = '') => {
   }
 };
 
-export const getOrderById = async (id) => {
-  const response = await axiosInstance.get(`${BASE_URL}/${id}`);
+const getOrderById = async (id) => {
+  const response = await firestoreApi.get(`${ENDPOINTS.FIRESTORE.ORDERS}/${id}`);
   return transformDoc(response.data);
 };
 
-export const updateOrderStatus = async (id, status) => {
+const getOrdersByCustomer = async (customerId) => {
+  const query = {
+    structuredQuery: {
+      from: [{ collectionId: 'orders' }],
+      where: {
+        fieldFilter: {
+          field: { fieldPath: 'userId' },
+          op: 'EQUAL',
+          value: { stringValue: customerId }
+        }
+      }
+    }
+  };
+  try {
+    const response = await firestoreApi.post(':runQuery', query);
+    const results = response.data
+      .filter(item => item.document)
+      .map(item => transformDoc(item.document));
+    return results.sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));
+  } catch (error) {
+    console.error("Query by userId failed, attempting customerId fallback", error);
+    query.structuredQuery.where.fieldFilter.field.fieldPath = 'customerId';
+    const response2 = await firestoreApi.post(':runQuery', query);
+    const results2 = response2.data
+      .filter(item => item.document)
+      .map(item => transformDoc(item.document));
+    return results2.sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));
+  }
+};
+
+const updateOrderStatus = async (id, status) => {
   const payload = {
     fields: {
       status: { stringValue: status }
     }
   };
-  
-  const response = await axiosInstance.patch(`${BASE_URL}/${id}?updateMask.fieldPaths=status`, payload);
+  const response = await firestoreApi.patch(`${ENDPOINTS.FIRESTORE.ORDERS}/${id}?updateMask.fieldPaths=status`, payload);
   return transformDoc(response.data);
 };
 
-export const updatePaymentStatus = async (id, status) => {
+const updatePaymentStatus = async (id, status) => {
   const payload = {
     fields: {
       paymentStatus: { stringValue: status }
     }
   };
-  
-  const response = await axiosInstance.patch(`${BASE_URL}/${id}?updateMask.fieldPaths=paymentStatus`, payload);
+  const response = await firestoreApi.patch(`${ENDPOINTS.FIRESTORE.ORDERS}/${id}?updateMask.fieldPaths=paymentStatus`, payload);
   return transformDoc(response.data);
 };
+
+export { getOrders, getOrderById, getOrdersByCustomer, updateOrderStatus, updatePaymentStatus };

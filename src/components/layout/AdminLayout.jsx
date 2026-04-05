@@ -1,10 +1,10 @@
 import React, { useState } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
-import { Link, useLocation } from 'react-router-dom';
+import { Link, useLocation, Outlet } from 'react-router-dom';
 import { logout } from '../../features/auth/authSlice';
 import { LayoutDashboard, User, LogOut, Package, ShoppingCart, Users, Layers, Menu, X } from 'lucide-react';
 
-const AdminLayout = ({ children }) => {
+const AdminLayout = () => {
   const dispatch = useDispatch();
   const location = useLocation();
   const { user } = useSelector((state) => state.auth);
@@ -102,7 +102,7 @@ const AdminLayout = ({ children }) => {
         </header>
 
         <main className="flex-1 overflow-y-auto p-4 md:p-0">
-          {children}
+          <Outlet />
         </main>
       </div>
     </div>

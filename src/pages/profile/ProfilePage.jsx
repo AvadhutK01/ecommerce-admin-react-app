@@ -1,8 +1,8 @@
 import React, { useState, useEffect } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
-import { updateAdminName, fetchAdminProfile, clearError } from '../features/auth/authSlice';
-import Button from '../components/common/Button';
-import Input from '../components/common/Input';
+import { updateAdminName, fetchAdminProfile, clearError } from '../../features/auth/authSlice';
+import Button from '../../components/common/Button';
+import Input from '../../components/common/Input';
 import { User, Save, CheckCircle2 } from 'lucide-react';
 
 const ProfilePage = () => {

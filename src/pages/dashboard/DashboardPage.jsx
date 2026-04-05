@@ -1,9 +1,7 @@
-import React, { useEffect, useMemo } from 'react';
+import React, { useEffect } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
-import { fetchOrders } from '../features/orders/orderSlice';
-import { fetchProducts } from '../features/products/productSlice';
-import { fetchCustomers } from '../features/customers/customerSlice';
-import { fetchCategories } from '../features/categories/categorySlice';
+import { fetchDashboardData } from '../../features/dashboard/dashboardSlice';
+import Loader from '../../components/common/Loader';
 import { 
   AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer
 } from 'recharts';
@@ -12,52 +10,22 @@ import { ShoppingBag, Users, Package, IndianRupee } from 'lucide-react';
 const DashboardPage = () => {
   const dispatch = useDispatch();
   const { user } = useSelector((state) => state.auth);
-  const { items: orders } = useSelector((state) => state.orders);
-  const { items: products } = useSelector((state) => state.products);
-  const { items: customers } = useSelector((state) => state.customers);
+  const { stats, salesData, recentOrders, recentCustomers, isLoading } = useSelector((state) => state.dashboard);
 
   useEffect(() => {
-    dispatch(fetchOrders({ pageSize: 100 }));
-    dispatch(fetchProducts({ pageSize: 100 }));
-    dispatch(fetchCustomers({ pageSize: 100 }));
-    dispatch(fetchCategories({ pageSize: 100 }));
+    dispatch(fetchDashboardData());
   }, [dispatch]);
 
-  const stats = useMemo(() => {
-    const validOrders = orders.filter(o => 
-      !['rejected', 'cancelled'].includes(o.status?.toLowerCase() || '') && 
-      !['failed', 'pending', 'refunded'].includes(o.paymentStatus?.toLowerCase() || '')
-    );
-    const totalSales = validOrders.reduce((sum, order) => sum + order.totalAmount, 0);
-    
-    return [
-      { label: 'Total Revenue', value: `₹${totalSales.toLocaleString()}`, icon: IndianRupee, color: 'text-emerald-600', bg: 'bg-emerald-50' },
-      { label: 'Total Orders', value: orders.length, icon: ShoppingBag, color: 'text-blue-600', bg: 'bg-blue-50' },
-      { label: 'Total Customers', value: customers.length, icon: Users, color: 'text-purple-600', bg: 'bg-purple-50' },
-      { label: 'Total Products', value: products.length, icon: Package, color: 'text-orange-600', bg: 'bg-orange-50' },
-    ];
-  }, [orders, customers, products]);
+  if (isLoading) {
+    return <Loader fullPage={true} />;
+  }
 
-  const salesData = useMemo(() => {
-    const last7Days = [...Array(7)].map((_, i) => {
-      const d = new Date();
-      d.setDate(d.getDate() - i);
-      return d.toISOString().split('T')[0];
-    }).reverse();
-
-    return last7Days.map(date => {
-      const dailyOrders = orders.filter(o => o.createdAt?.startsWith(date));
-      const validDailyOrders = dailyOrders.filter(o => 
-        !['rejected', 'cancelled'].includes(o.status?.toLowerCase() || '') && 
-        !['failed', 'pending', 'refunded'].includes(o.paymentStatus?.toLowerCase() || '')
-      );
-      const amount = validDailyOrders.reduce((sum, o) => sum + o.totalAmount, 0);
-      return {
-        name: new Date(date).toLocaleDateString('en-IN', { weekday: 'short' }),
-        sales: amount
-      };
-    });
-  }, [orders]);
+  const statCards = [
+    { label: 'Total Revenue', value: `₹${stats.totalRevenue.toLocaleString()}`, icon: IndianRupee, color: 'text-emerald-600', bg: 'bg-emerald-50' },
+    { label: 'Total Orders', value: stats.totalOrders, icon: ShoppingBag, color: 'text-blue-600', bg: 'bg-blue-50' },
+    { label: 'Total Customers', value: stats.totalCustomers, icon: Users, color: 'text-purple-600', bg: 'bg-purple-50' },
+    { label: 'Total Products', value: stats.totalProducts, icon: Package, color: 'text-orange-600', bg: 'bg-orange-50' },
+  ];
 
   return (
     <div className="p-8 max-w-7xl mx-auto space-y-8 text-sm">
@@ -69,7 +37,7 @@ const DashboardPage = () => {
       </div>
 
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
-        {stats.map((stat, idx) => (
+        {statCards.map((stat, idx) => (
           <div key={idx} className="bg-white p-6 rounded-2xl border border-gray-100 shadow-sm hover:shadow-md transition-shadow duration-300">
             <div className="flex items-center justify-between mb-4">
               <div className={`p-3 rounded-xl ${stat.bg} ${stat.color}`}>
@@ -115,7 +83,7 @@ const DashboardPage = () => {
         <div className="bg-white p-8 rounded-2xl border border-gray-100 shadow-sm">
           <h2 className="text-lg font-bold text-gray-900 mb-6">Recent Orders</h2>
           <div className="space-y-4">
-            {orders.slice(0, 5).map((order, idx) => (
+            {recentOrders.map((order, idx) => (
               <div key={idx} className="flex items-center justify-between p-4 rounded-xl border border-gray-50 bg-gray-50/30 hover:bg-gray-50 transition-colors">
                 <div className="flex items-center gap-4">
                   <div className="h-10 w-10 rounded-lg bg-white border border-gray-100 flex items-center justify-center">
@@ -128,7 +96,7 @@ const DashboardPage = () => {
                 </div>
                 <div className="text-right">
                   <p className="font-bold text-gray-900">₹{order.totalAmount.toLocaleString()}</p>
-                  <p className="text-[10px] font-bold text-primary-600 uppercase tracking-tighter">{order.status}</p>
+                  <p className="text-[10px] font-bold text-primary-600 uppercase tracking-tighter">{order.paymentStatus}</p>
                 </div>
               </div>
             ))}
@@ -138,21 +106,21 @@ const DashboardPage = () => {
         <div className="bg-white p-8 rounded-2xl border border-gray-100 shadow-sm">
           <h2 className="text-lg font-bold text-gray-900 mb-6">New Customers</h2>
           <div className="space-y-4">
-            {customers.slice(0, 5).map((customer, idx) => (
-              <div key={idx} className="flex items-center justify-between p-4 rounded-xl border border-gray-50 bg-gray-50/30 hover:bg-gray-50 transition-colors">
-                <div className="flex items-center gap-4">
-                  <div className="h-10 w-10 rounded-full bg-primary-50 flex items-center justify-center text-primary-600 font-bold">
-                    {customer.name.charAt(0)}
+            {recentCustomers.map((customer, idx) => (
+                <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 p-4 rounded-xl border border-gray-50 bg-gray-50/30 hover:bg-gray-50 transition-colors">
+                  <div className="flex items-center gap-4 min-w-0">
+                    <div className="h-10 w-10 rounded-full bg-primary-50 flex-shrink-0 flex items-center justify-center text-primary-600 font-bold">
+                      {customer.name?.charAt(0) || '?'}
+                    </div>
+                    <div className="min-w-0">
+                      <p className="font-bold text-gray-900 truncate">{customer.name}</p>
+                      <p className="text-xs text-gray-500 truncate">{customer.email}</p>
+                    </div>
                   </div>
-                  <div>
-                    <p className="font-bold text-gray-900">{customer.name}</p>
-                    <p className="text-xs text-gray-500">{customer.email}</p>
+                  <div className="text-[10px] sm:text-xs text-gray-400 font-bold uppercase tracking-widest sm:whitespace-nowrap pl-14 sm:pl-0">
+                    {customer.createdAt ? new Date(customer.createdAt).toLocaleDateString('en-IN', { month: 'short', day: 'numeric', year: 'numeric' }) : '-'}
                   </div>
                 </div>
-                <div className="text-xs text-gray-500 font-medium whitespace-nowrap">
-                  {customer.createdAt ? new Date(customer.createdAt).toLocaleDateString('en-IN', { month: 'short', day: 'numeric', year: 'numeric' }) : '-'}
-                </div>
-              </div>
             ))}
           </div>
         </div>

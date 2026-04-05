@@ -1,8 +1,8 @@
 import React, { useEffect, useState } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
-import { fetchOrders, setOrderPage, pushOrderToken } from '../features/orders/orderSlice';
-import { Search, Eye, ShoppingBag, Clock, CheckCircle, Truck, XCircle, MoreVertical } from 'lucide-react';
-import DataTable from '../components/common/DataTable';
+import { fetchOrders, setOrderPage, pushOrderToken } from '../../features/orders/orderSlice';
+import { Search, Eye, ShoppingBag, Clock, CheckCircle, Truck, XCircle } from 'lucide-react';
+import DataTable from '../../components/common/DataTable';
 import { useNavigate } from 'react-router-dom';
 
 const OrdersPage = () => {

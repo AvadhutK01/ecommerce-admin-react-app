@@ -1,8 +1,8 @@
 import React, { useEffect, useState } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
-import { fetchCustomers, setCustomerPage, pushCustomerToken } from '../features/customers/customerSlice';
+import { fetchCustomers, setCustomerPage, pushCustomerToken } from '../../features/customers/customerSlice';
 import { Search, Eye, Users, Mail, Phone, Calendar, IndianRupee } from 'lucide-react';
-import DataTable from '../components/common/DataTable';
+import DataTable from '../../components/common/DataTable';
 import { useNavigate } from 'react-router-dom';
 
 const CustomersPage = () => {

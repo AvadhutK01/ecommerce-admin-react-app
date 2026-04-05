@@ -1,40 +1,57 @@
 import axios from 'axios';
 
-const axiosInstance = axios.create({
-  baseURL: import.meta.env.VITE_FIREBASE_BASE_URL,
+const API_KEY = import.meta.env.VITE_FIREBASE_API_KEY;
+const FIRESTORE_BASE_URL = import.meta.env.VITE_FIREBASE_BASE_URL;
+const AUTH_BASE_URL = import.meta.env.VITE_AUTH_BASE_URL;
+
+const firestoreApi = axios.create({
+  baseURL: FIRESTORE_BASE_URL,
   headers: {
     'Content-Type': 'application/json',
   },
 });
 
-axiosInstance.interceptors.request.use(
-  (config) => {
-    const token = localStorage.getItem('token');
-    if (token) {
-      config.headers.Authorization = `Bearer ${token}`;
-    }
-    return config;
+const authApi = axios.create({
+  baseURL: AUTH_BASE_URL,
+  headers: {
+    'Content-Type': 'application/json',
   },
-  (error) => {
-    return Promise.reject(error);
-  }
-);
+});
 
-axiosInstance.interceptors.response.use(
-  (response) => response,
-  (error) => {
-    const message = error.response?.data?.error?.message || 'Something went wrong';
-    
-    if (error.response?.status === 401) {
-      localStorage.removeItem('token');
-      localStorage.removeItem('user');
-      window.location.href = '/login';
+const setupInterceptors = (instance) => {
+  instance.interceptors.request.use(
+    (config) => {
+      const token = localStorage.getItem('token');
+      if (token && !config.params?.key) {
+        config.headers.Authorization = `Bearer ${token}`;
+      }
+      if (instance === authApi || config.url.includes(':')) {
+        config.params = { ...config.params, key: API_KEY };
+      }
+      return config;
+    },
+    (error) => Promise.reject(error)
+  );
+
+  instance.interceptors.response.use(
+    (response) => response,
+    (error) => {
+      const message = error.response?.data?.error?.message || 'Something went wrong';
+      if (error.response?.status === 401) {
+        localStorage.removeItem('token');
+        localStorage.removeItem('user');
+        if (window.location.pathname !== '/login') {
+          window.location.href = '/login';
+        }
+      }
+      const customError = new Error(message);
+      customError.response = error.response;
+      return Promise.reject(customError);
     }
-   
-    const customError = new Error(message);
-    customError.response = error.response;
-    return Promise.reject(customError);
-  }
-);
+  );
+};
 
-export default axiosInstance;
+setupInterceptors(firestoreApi);
+setupInterceptors(authApi);
+
+export { firestoreApi, authApi };

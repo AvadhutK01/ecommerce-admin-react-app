@@ -1,13 +1,26 @@
 import { createSlice, createAsyncThunk } from '@reduxjs/toolkit';
-import * as orderService from '../../api/orderService';
+import * as orderService from './orderService';
+import * as productService from '../products/productService';
 
 export const fetchOrders = createAsyncThunk(
   'orders/fetchOrders',
-  async ({ pageSize = 10, pageToken = '' } = {}, { rejectWithValue }) => {
+  async ({ pageSize = 5, pageToken = '' } = {}, { rejectWithValue }) => {
     try {
       return await orderService.getOrders(pageSize, pageToken);
     } catch (error) {
       return rejectWithValue(error.message || 'Failed to fetch orders');
+    }
+  }
+);
+
+export const fetchCustomerOrders = createAsyncThunk(
+  'orders/fetchCustomerOrders',
+  async (customerId, { rejectWithValue }) => {
+    try {
+      const orders = await orderService.getOrdersByCustomer(customerId);
+      return orders;
+    } catch (error) {
+      return rejectWithValue(error.message || 'Failed to fetch customer orders');
     }
   }
 );
@@ -25,11 +38,30 @@ export const fetchOrderById = createAsyncThunk(
 
 export const updateStatus = createAsyncThunk(
   'orders/updateStatus',
-  async ({ id, status }, { rejectWithValue }) => {
+  async ({ id, status, items = [] }, { rejectWithValue }) => {
     try {
-      return await orderService.updateOrderStatus(id, status);
+      const result = await orderService.updateOrderStatus(id, status);
+      if (status === 'rejected' && items.length > 0) {
+        for (const item of items) {
+          if (item.productId) {
+            await productService.updateProductStock(item.productId, item.quantity);
+          }
+        }
+      }
+      return result;
     } catch (error) {
       return rejectWithValue(error.message || 'Failed to update order status');
+    }
+  }
+);
+
+export const updatePaymentStatus = createAsyncThunk(
+  'orders/updatePaymentStatus',
+  async ({ id, paymentStatus }, { rejectWithValue }) => {
+    try {
+      return await orderService.updatePaymentStatus(id, paymentStatus);
+    } catch (error) {
+      return rejectWithValue(error.message || 'Failed to update payment status');
     }
   }
 );
@@ -40,11 +72,12 @@ const orderSlice = createSlice({
     items: [],
     selectedOrder: null,
     isLoading: false,
+    isUpdatingPayment: false,
     error: null,
     nextPageToken: null,
     tokenHistory: [null],
     currentPage: 1,
-    pageSize: 10,
+    pageSize: 5,
   },
   reducers: {
     clearOrderError: (state) => {
@@ -78,6 +111,17 @@ const orderSlice = createSlice({
         state.isLoading = false;
         state.error = action.payload;
       })
+      .addCase(fetchCustomerOrders.pending, (state) => {
+        state.isLoading = true;
+      })
+      .addCase(fetchCustomerOrders.fulfilled, (state, action) => {
+        state.isLoading = false;
+        state.items = action.payload;
+      })
+      .addCase(fetchCustomerOrders.rejected, (state, action) => {
+        state.isLoading = false;
+        state.error = action.payload;
+      })
       .addCase(fetchOrderById.pending, (state) => {
         state.isLoading = true;
       })
@@ -97,6 +141,19 @@ const orderSlice = createSlice({
         if (state.selectedOrder?.id === action.payload.id) {
           state.selectedOrder = action.payload;
         }
+      })
+      .addCase(updatePaymentStatus.pending, (state) => {
+        state.isUpdatingPayment = true;
+      })
+      .addCase(updatePaymentStatus.fulfilled, (state, action) => {
+        state.isUpdatingPayment = false;
+        if (state.selectedOrder?.id === action.payload.id) {
+          state.selectedOrder = action.payload;
+        }
+      })
+      .addCase(updatePaymentStatus.rejected, (state, action) => {
+        state.isUpdatingPayment = false;
+        state.error = action.payload;
       });
   },
 });

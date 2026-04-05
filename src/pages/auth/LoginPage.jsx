@@ -2,11 +2,11 @@ import React, { useEffect } from 'react';
 import { useFormik } from 'formik';
 import * as Yup from 'yup';
 import { useDispatch, useSelector } from 'react-redux';
-import { loginUser, clearError } from '../features/auth/authSlice';
-import Button from '../components/common/Button';
-import Input from '../components/common/Input';
+import { loginUser, clearError } from '../../features/auth/authSlice';
+import Button from '../../components/common/Button';
+import Input from '../../components/common/Input';
 import { LogIn } from 'lucide-react';
-import { Link } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
 
 const loginSchema = Yup.object().shape({
   email: Yup.string()
@@ -19,7 +19,8 @@ const loginSchema = Yup.object().shape({
 
 const LoginPage = () => {
   const dispatch = useDispatch();
-  const { isLoading, error } = useSelector((state) => state.auth);
+  const navigate = useNavigate();
+  const { isLoading, error, token } = useSelector((state) => state.auth);
 
   const formik = useFormik({
     initialValues: {
@@ -33,10 +34,13 @@ const LoginPage = () => {
   });
 
   useEffect(() => {
+    if (token) {
+      navigate('/');
+    }
     return () => {
       dispatch(clearError());
     };
-  }, [dispatch]);
+  }, [dispatch, token, navigate]);
 
   return (
     <div className="min-h-screen flex items-center justify-center bg-gray-50 py-12 px-4 sm:px-6 lg:px-8">

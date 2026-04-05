@@ -1,12 +1,11 @@
-import axiosInstance from './axiosInstance';
+import { firestoreApi } from '../../api/axiosInstance';
+import ENDPOINTS from '../../api/endpoints';
 
 const PROJECT_ID = import.meta.env.VITE_FIREBASE_PROJECT_ID;
-const BASE_URL = `https://firestore.googleapis.com/v1/projects/${PROJECT_ID}/databases/(default)/documents/products`;
 
 const transformDoc = (doc) => {
   const fields = doc.fields;
   const id = doc.name.split('/').pop();
-  
   return {
     id,
     name: fields?.name?.stringValue || '',
@@ -22,18 +21,16 @@ const transformDoc = (doc) => {
   };
 };
 
-export const getProductById = async (id) => {
-  const response = await axiosInstance.get(`${BASE_URL}/${id}`);
+const getProductById = async (id) => {
+  const response = await firestoreApi.get(`${ENDPOINTS.FIRESTORE.PRODUCTS}/${id}`);
   return transformDoc(response.data);
 };
 
-export const getProducts = async (pageSize = 10, pageToken = '') => {
+const getProducts = async (pageSize = 10, pageToken = '') => {
   try {
-    const params = new URLSearchParams();
-    params.append('pageSize', pageSize);
-    if (pageToken) params.append('pageToken', pageToken);
-    
-    const response = await axiosInstance.get(`${BASE_URL}?${params.toString()}`);
+    const params = { pageSize };
+    if (pageToken) params.pageToken = pageToken;
+    const response = await firestoreApi.get(ENDPOINTS.FIRESTORE.PRODUCTS, { params });
     return {
       documents: response.data.documents?.map(transformDoc) || [],
       nextPageToken: response.data.nextPageToken || null
@@ -46,7 +43,7 @@ export const getProducts = async (pageSize = 10, pageToken = '') => {
   }
 };
 
-export const createProduct = async (data) => {
+const createProduct = async (data) => {
   const payload = {
     fields: {
       name: { stringValue: data.name },
@@ -63,12 +60,11 @@ export const createProduct = async (data) => {
       }
     }
   };
-  
-  const response = await axiosInstance.post(BASE_URL, payload);
+  const response = await firestoreApi.post(ENDPOINTS.FIRESTORE.PRODUCTS, payload);
   return transformDoc(response.data);
 };
 
-export const updateProduct = async (id, data) => {
+const updateProduct = async (id, data) => {
   const payload = {
     fields: {
       name: { stringValue: data.name },
@@ -85,24 +81,19 @@ export const updateProduct = async (id, data) => {
       }
     }
   };
-  
   const fields = ['name', 'description', 'price', 'stock', 'categoryId', 'subcategory', 'thumbnail', 'images'];
   const updateMask = fields.map(f => `updateMask.fieldPaths=${f}`).join('&');
-  
-  const response = await axiosInstance.patch(`${BASE_URL}/${id}?${updateMask}`, payload);
+  const response = await firestoreApi.patch(`${ENDPOINTS.FIRESTORE.PRODUCTS}/${id}?${updateMask}`, payload);
   return transformDoc(response.data);
 };
 
-export const deleteProduct = async (id) => {
-  await axiosInstance.delete(`${BASE_URL}/${id}`);
+const deleteProduct = async (id) => {
+  await firestoreApi.delete(`${ENDPOINTS.FIRESTORE.PRODUCTS}/${id}`);
   return id;
 };
 
 const updateProductStock = async (productId, incrementAmount) => {
   if (!productId || incrementAmount === 0) return;
-  
-  const commitUrl = `https://firestore.googleapis.com/v1/projects/${PROJECT_ID}/databases/(default)/documents:commit`;
-  
   const payload = {
     writes: [
       {
@@ -118,12 +109,11 @@ const updateProductStock = async (productId, incrementAmount) => {
       }
     ]
   };
-  
   try {
-    await axiosInstance.post(commitUrl, payload);
+    await firestoreApi.post(':commit', payload);
   } catch (error) {
     console.error('Failed to update product stock:', error);
   }
 };
 
-export { updateProductStock };
+export { getProductById, getProducts, createProduct, updateProduct, deleteProduct, updateProductStock };
