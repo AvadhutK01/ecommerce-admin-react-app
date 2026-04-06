@@ -58,9 +58,4 @@ const updateCategory = async (id, data) => {
   return mapFirestoreDoc(response.data);
 };
 
-const deleteCategory = async (id) => {
-  await firestoreApi.delete(`${ENDPOINTS.FIRESTORE.CATEGORIES}/${id}`);
-  return id;
-};
-
-export { getCategories, getCategoryById, createCategory, updateCategory, deleteCategory };
+export { getCategories, getCategoryById, createCategory, updateCategory };

@@ -34,17 +34,6 @@ export const updateCategory = createAsyncThunk(
   }
 );
 
-export const deleteCategory = createAsyncThunk(
-  'categories/deleteCategory',
-  async (id, { rejectWithValue }) => {
-    try {
-      return await categoryService.deleteCategory(id);
-    } catch (error) {
-      return rejectWithValue(error.message || 'Failed to delete category');
-    }
-  }
-);
-
 const categorySlice = createSlice({
   name: 'categories',
   initialState: {
@@ -113,17 +102,6 @@ const categorySlice = createSlice({
         state.isLoading = false;
         state.error = action.payload;
       })
-      .addCase(deleteCategory.pending, (state) => {
-        state.isLoading = true;
-      })
-      .addCase(deleteCategory.fulfilled, (state, action) => {
-        state.isLoading = false;
-        state.items = state.items.filter(cat => cat.id !== action.payload);
-      })
-      .addCase(deleteCategory.rejected, (state, action) => {
-        state.isLoading = false;
-        state.error = action.payload;
-      });
   },
 });
 

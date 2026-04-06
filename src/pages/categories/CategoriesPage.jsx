@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
-import { fetchCategories, deleteCategory, clearCategoryError, setPage, pushToken } from '../../features/categories/categorySlice';
+import { fetchCategories, clearCategoryError, setPage, pushToken } from '../../features/categories/categorySlice';
 import Button from '../../components/common/Button';
 import { Plus, Edit2, Search, Layers, Eye } from 'lucide-react';
 import CategoryModal from '../../components/categories/CategoryModal';
@@ -31,12 +31,6 @@ const CategoriesPage = () => {
       const prevToken = tokenHistory[currentPage - 2];
       dispatch(setPage(currentPage - 1));
       dispatch(fetchCategories({ pageSize, pageToken: prevToken }));
-    }
-  };
-
-  const handleDelete = (id) => {
-    if (window.confirm('Are you sure you want to delete this category? All subcategories will also be removed.')) {
-      dispatch(deleteCategory(id));
     }
   };
 
